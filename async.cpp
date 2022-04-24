@@ -1,15 +1,27 @@
 #include "async.h"
+#include "model.h"
+
 
 namespace async {
 
-handle_t connect([[maybe_unused]]std::size_t bulk) {
-    return nullptr;
+handle_t connect(std::size_t bulk) {
+
+    auto model = new Model(bulk);
+    model->start();
+    return model;
 }
 
-void receive([[maybe_unused]]handle_t handle, [[maybe_unused]]const char *data, [[maybe_unused]]std::size_t size) {
+void receive(handle_t handle, const char *data, std::size_t size) {
+
+    auto model = static_cast<Model*>(handle);
+    model->send(data, size);
+
 }
 
-void disconnect([[maybe_unused]]handle_t handle) {
+void disconnect(handle_t handle) {
+    auto model = static_cast<Model*>(handle);
+    model->send(protocol::eof);
+    delete model;
 }
 
 }

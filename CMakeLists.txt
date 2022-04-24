@@ -11,9 +11,13 @@ configure_file(version.h.in version.h)
 
 add_executable(bulk_cli main.cpp)
 add_library(async_ver lib.cpp)
-add_library(async SHARED async.cpp)
+add_library(async SHARED 
+    async.cpp
+    model.cpp
+    state.cpp
+)
 
-set_target_properties(bulk_cli PROPERTIES
+set_target_properties(bulk_cli async_ver async PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
