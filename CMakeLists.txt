@@ -9,6 +9,8 @@ option(WITH_GOOGLE_TEST "Whether to build Google tets" OFF)
 
 configure_file(version.h.in version.h)
 
+find_package(Threads)
+
 add_executable(bulk_cli main.cpp)
 add_library(async_ver lib.cpp)
 add_library(async SHARED 
@@ -28,10 +30,12 @@ target_include_directories(async_ver
 
 target_link_libraries(bulk_cli PRIVATE
     async_ver
+    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 target_link_libraries(bulk_cli PRIVATE 
     async
+    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 if(WITH_GOOGLE_TEST)

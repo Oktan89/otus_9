@@ -4,6 +4,7 @@
 #include <ctime>
 #include <chrono>
 #include <atomic>
+#include <mutex>
 #include "interface.h"
 
 struct protocol
@@ -25,6 +26,7 @@ private:
     std::string buf_send;
     std::size_t _batch_size = 0;
     std::atomic<bool> status = true;
+    std::mutex mt;
     model_time _t;
     friend class StaticBlock;
     friend class DinamicBlock;
@@ -37,7 +39,7 @@ public:
 
     void send(const char *data, std::size_t size);
 
-    void send(const char* data);
+    void send_end(const char* data);
 
 private:
     void notify();

@@ -54,6 +54,7 @@ void Model::TransitionTo(std::unique_ptr<__BaseState>& state)
 
 void Model::send(const char *data, std::size_t size)
 {
+    //  std::lock_guard<std::mutex> lg(mt);
     for(std::size_t i = 0; i < size; ++i)
     {
         
@@ -69,7 +70,7 @@ void Model::send(const char *data, std::size_t size)
     }
 }
 
-void Model::send(const char* data)
+void Model::send_end(const char* data)
 {
     push(data);
     buf_send.clear();
