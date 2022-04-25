@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
-#include <thread>
+
 
 constexpr char protocol::eof[];
 constexpr char protocol::start[];
@@ -33,6 +33,30 @@ void Model::start()
 {
     std::unique_ptr<__BaseState> state_static = std::make_unique<StaticBlock>();
     TransitionTo(state_static);
+    m_stopped = false;
+    m_thread = std::thread(&Model::bulk_processing, this);
+}
+
+void Model::bulk_processing()
+{
+		while (!m_stopped) {
+			std::unique_lock<std::mutex> lck{m_mutex};
+			while (!m_stopped && m_tasks_buff.empty())
+				m_condition.wait(lck);
+
+			if (m_stopped)
+				break;
+
+			auto pair = m_tasks_buff.front();
+			m_tasks_buff.pop();
+			push_buf(pair.first, pair.second);
+		}
+
+		while(!m_tasks_buff.empty()) {
+			auto pair = m_tasks_buff.front();
+			m_tasks_buff.pop();
+			push_buf(pair.first, pair.second);
+		}
 
 }
 
@@ -52,9 +76,9 @@ void Model::TransitionTo(std::unique_ptr<__BaseState>& state)
     _state->setModelContext(this);
 }
 
-void Model::send(const char *data, std::size_t size)
+void Model::push_buf(const char *data, std::size_t size)
 {
-    //  std::lock_guard<std::mutex> lg(mt);
+
     for(std::size_t i = 0; i < size; ++i)
     {
         
@@ -70,8 +94,26 @@ void Model::send(const char *data, std::size_t size)
     }
 }
 
+void Model::send(const char *data, std::size_t size)
+{
+
+    std::lock_guard<std::mutex> guard(m_mutex);
+		m_tasks_buff.push(
+			std::make_pair(
+				data,
+				size
+			)
+		);
+		m_condition.notify_all();
+}
+
 void Model::send_end(const char* data)
 {
+    if (!m_stopped) {
+			m_stopped = true;
+			m_condition.notify_one();
+			m_thread.join();
+		}
     push(data);
     buf_send.clear();
 }

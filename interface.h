@@ -23,6 +23,6 @@ public:
     virtual void EndBlock() = 0;
     virtual void StartBlock() = 0;
     virtual void Exit() = 0;
-    ~__BaseState() = default;
+    virtual ~__BaseState() = default;
 };
 

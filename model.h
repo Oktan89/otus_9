@@ -5,6 +5,9 @@
 #include <chrono>
 #include <atomic>
 #include <mutex>
+#include <condition_variable>
+#include <queue>
+#include <thread>
 #include "interface.h"
 
 struct protocol
@@ -23,19 +26,23 @@ public:
 private:
     std::vector<std::string> _batch;
     std::unique_ptr<__BaseState> _state;
-    std::string buf_send;
     std::size_t _batch_size = 0;
     std::atomic<bool> status = true;
-    std::mutex mt;
     model_time _t;
     friend class StaticBlock;
     friend class DinamicBlock;
+    ///Active object
+    std::string buf_send;
+    std::condition_variable m_condition;
+	std::queue<std::pair<const char*, std::size_t>> m_tasks_buff;
+	std::mutex m_mutex;
+	std::thread m_thread;
+	std::atomic<bool> m_stopped;
+
 public:
     Model(std::size_t bulk);
 
     void start();
-
-    void push(const std::string& com);
 
     void send(const char *data, std::size_t size);
 
@@ -43,6 +50,12 @@ public:
 
 private:
     void notify();
+
+    void bulk_processing();
+
+    void push(const std::string& com);
+
+    void push_buf(const char *data, std::size_t size);
 
     std::size_t get_batch_size() const noexcept;
 
