@@ -49,6 +49,7 @@ void Model::bulk_processing()
 
 			auto pair = m_tasks_buff.front();
 			m_tasks_buff.pop();
+            lck.unlock();
 			push_buf(pair.first, pair.second);
 		}
 
@@ -104,7 +105,7 @@ void Model::send(const char *data, std::size_t size)
 				size
 			)
 		);
-		m_condition.notify_all();
+		m_condition.notify_one();
 }
 
 void Model::send_end(const char* data)

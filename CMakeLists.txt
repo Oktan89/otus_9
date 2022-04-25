@@ -28,14 +28,13 @@ target_include_directories(async_ver
     PRIVATE "${CMAKE_BINARY_DIR}"
 )
 
-target_link_libraries(bulk_cli PRIVATE
-    async_ver
+target_link_libraries(async PRIVATE
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-target_link_libraries(bulk_cli PRIVATE 
+target_link_libraries(bulk_cli PRIVATE
+    async_ver
     async
-    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 if(WITH_GOOGLE_TEST)
