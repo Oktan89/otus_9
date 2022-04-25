@@ -42,7 +42,7 @@ void Model::bulk_processing()
 		while (!m_stopped) {
 			std::unique_lock<std::mutex> lck{m_mutex};
 			while (!m_stopped && m_tasks_buff.empty())
-				m_condition.wait(lck);
+                m_condition.wait_for(lck, std::chrono::milliseconds(100));
 
 			if (m_stopped)
 				break;
