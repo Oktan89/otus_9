@@ -14,7 +14,7 @@ constexpr char protocol::start[];
 constexpr char protocol::end[];
 
 
-Model::Model(std::size_t bulk)
+Model::Model(std::size_t bulk) : log(LogerBulk::get())
 {
 
     if (bulk >= 1)
@@ -42,7 +42,7 @@ void Model::bulk_processing()
 		while (!m_stopped) {
 			std::unique_lock<std::mutex> lck{m_mutex};
 			while (!m_stopped && m_tasks_buff.empty())
-                m_condition.wait_for(lck, std::chrono::milliseconds(100));
+                m_cv_processing.wait_for(lck, std::chrono::milliseconds(100));
 
 			if (m_stopped)
 				break;
@@ -105,17 +105,17 @@ void Model::send(const char *data, std::size_t size)
 				size
 			)
 		);
-		m_condition.notify_one();
+		m_cv_processing.notify_one();
 }
 
-void Model::send_end(const char* data)
+void Model::send_end()
 {
     if (!m_stopped) {
 			m_stopped = true;
-			m_condition.notify_one();
-			m_thread.join();
+            m_cv_processing.notify_one();
+           	m_thread.join();
 		}
-    push(data);
+    push(protocol::eof);
     buf_send.clear();
 }
 
@@ -143,46 +143,10 @@ void Model::push(const std::string& com)
 
 void Model::notify()
 {
-    std::vector<std::string>& data = getData();
-    
-    for(auto it = data.cbegin(); it != data.cend(); ++it)
-    {
-        if(it != data.begin())
-        {
-            std::cout << ", ";
-        }
-        else
-        {
-            std::cout << "bulk: ";
-        }
-        std::cout << *it;
-    }
-        
-    if(data.size() != 0) 
-        std::cout << std::endl;
-}
-
-bool Model::getStatus() const noexcept
-{
-    return status;
+    log.push(_batch);
 }
 
 std::vector<std::string>& Model::getData()
 {
     return _batch;
-}
-
-void Model::setTimeStartBlock()
-{
-    _t = std::chrono::system_clock::now();
-}
-
-Model::model_time Model::getTimeStartBlock() const noexcept
-{
-    return _t;
-}
-
-Model::model_time Model::getTime()
-{
-    return std::chrono::system_clock::now();
 }

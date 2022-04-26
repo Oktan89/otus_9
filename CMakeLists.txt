@@ -17,6 +17,7 @@ add_library(async SHARED
     async.cpp
     model.cpp
     state.cpp
+    loger.cpp
 )
 
 set_target_properties(bulk_cli async_ver async PROPERTIES
