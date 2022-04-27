@@ -23,6 +23,7 @@ class LogerBulk
     std::mutex m_mutex;
     std::mutex m_mutex_file;
     std::atomic_bool m_stop{false};
+    std::atomic_bool m_stop_file{false};
 
 public:
     

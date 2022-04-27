@@ -14,7 +14,6 @@ LogerBulk::~LogerBulk()
 {
     m_stop = true;
     m_cv.notify_all();
-    m_cv_file.notify_all();
 
     for(auto &p : m_pool)
     {
@@ -63,10 +62,10 @@ void LogerBulk::log_cli()
 
         auto bulk = m_queue_cli.front();
         m_queue_cli.pop();
-        ul.unlock();
         show_bulk(bulk);
+        ul.unlock();
         std::lock_guard<std::mutex> lg(m_mutex_file);
-        m_queue_file.push(bulk);
+            m_queue_file.push(bulk);
         m_cv_file.notify_all();
     }
 
@@ -76,9 +75,11 @@ void LogerBulk::log_cli()
         m_queue_cli.pop();
         show_bulk(bulk);
         std::lock_guard<std::mutex> lg(m_mutex_file);
-        m_queue_file.push(bulk);
+            m_queue_file.push(bulk);
         m_cv_file.notify_all();
     }
+    m_stop_file = true;
+    m_cv_file.notify_all();
 }
 
 
@@ -117,27 +118,30 @@ void LogerBulk::log_file()
         file.close();
     };
 
-    while(!m_stop)
+    while(!m_stop_file)
     {
         std::unique_lock<std::mutex> ul(m_mutex_file);
-        while(m_queue_file.empty() && !m_stop)
+        while(m_queue_file.empty() && !m_stop_file)
             m_cv_file.wait(ul);
         
-        if(m_stop)
+        if(m_stop_file)
             break;
 
         auto bulk = m_queue_file.front();
         m_queue_file.pop();
-        //ul.unlock();////////////////////////////////////////????????????????????????????
         write_file(bulk);
     }
 
-    while(!m_queue_file.empty())//////////////////???????????????????????????????????
+    while(!m_queue_file.empty())
     {
+        std::lock_guard<std::mutex> lg(m_mutex_file);
+        if(m_queue_file.empty())
+            break;
         auto bulk = m_queue_file.front();
         m_queue_file.pop();
         write_file(bulk);
     }
+    m_cv_file.notify_all();
 }
 
 LogerBulk::bulk_time LogerBulk::getTime() const

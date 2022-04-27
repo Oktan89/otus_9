@@ -36,6 +36,7 @@ target_link_libraries(async PRIVATE
 target_link_libraries(bulk_cli PRIVATE
     async_ver
     async
+    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 if(WITH_GOOGLE_TEST)
