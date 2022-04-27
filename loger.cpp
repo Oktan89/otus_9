@@ -96,7 +96,7 @@ void LogerBulk::log_file()
         if (std::ifstream(file_name))
         {
             auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(getTime() - t);
-            file_name = file_name + "_" + std::to_string(nano.count()); 
+            file_name.insert(file_name.find_first_of("."), "_" + std::to_string(nano.count())); 
         }
         std::ofstream file(file_name, std::ios::app);
 
